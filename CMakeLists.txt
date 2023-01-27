@@ -76,7 +76,18 @@ endif()
 
 project(VBA-M C CXX)
 
-cmake_minimum_required(VERSION 2.8.12)
+cmake_minimum_required(VERSION 3.15)
+
+set (gRPC_BUILD_CSHARP_EXT OFF CACHE INTERNAL "Don't compile C# Ext")
+
+include(FetchContent)
+FetchContent_Declare(
+  gRPC
+  GIT_REPOSITORY        https://github.com/grpc/grpc
+  GIT_TAG               v1.46.6
+)
+set(FETCHCONTENT_QUIET OFF)
+FetchContent_MakeAvailable(gRPC)
 
 if(NOT CMAKE_PREFIX_PATH AND (NOT ("$ENV{CMAKE_PREFIX_PATH}" STREQUAL "")))
     set(CMAKE_PREFIX_PATH "$ENV{CMAKE_PREFIX_PATH}")
@@ -1187,6 +1198,7 @@ if((NOT TRANSLATIONS_ONLY) AND ENABLE_SDL)
 
     target_link_libraries(
         vbam
+        grpc++
         ${VBAMCORE_LIBS}
         ${WIN32_LIBRARIES}
         ${LIRC_CLIENT_LIBRARY}
