@@ -435,6 +435,8 @@ if(WIN32)
     set(SDL2_LIBRARY ${SDL2_LIBRARY} setupapi winmm)
 endif()
 
+find_library(PROTOBUF libprotobuf REQUIRED)
+
 # set the standard libraries all ports use
 set(
     VBAMCORE_LIBS
@@ -446,7 +448,7 @@ set(
     ${ZLIB_LIBRARY}
     grpc++
     grpc
-    protobuf
+    ${PROTOBUF}
 )
 
 if(ENABLE_FFMPEG)
