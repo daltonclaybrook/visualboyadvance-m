@@ -12,6 +12,7 @@
 #include "../common/ConfigManager.h"
 #include "../gba/GBALink.h"
 #include "../gba/Sound.h"
+#include "../external/control.h"
 #include "gb.h"
 #include "gbCheats.h"
 #include "gbGlobals.h"
@@ -4158,6 +4159,8 @@ void gbCleanUp()
         gbTAMA5ram = NULL;
     }
 
+    StopListeningForWRAMUpdates();
+
     systemSaveUpdateCounter = SYSTEM_SAVE_NOT_UPDATED;
 }
 
@@ -4190,6 +4193,10 @@ bool gbLoadRom(const char* szFile)
 
     if (!gbCheckRomHeader())
         return false;
+
+    // External control
+    OpenEmulatorConfigNearRomPath(szFile);
+    StartListeningForWRAMUpdates();
 
     return gbUpdateSizes();
 }
@@ -4615,6 +4622,25 @@ static void gbUpdateJoypads(bool readSensors)
     }
 }
 
+time_t last_ram_update = 0;
+time_t ram_update_threshold = 5; // seconds
+
+/// @brief Update WRAM if necessary based on the external control system
+void handle_external_watched_wram() {
+    time_t current = time(NULL);
+    if (current - last_ram_update < ram_update_threshold) {
+        // Only attempt to update external ram as often as the time threshold is elapsed
+        return;
+    }
+    last_ram_update = current;
+
+    for (size_t i = 0; i < CountOfWatchedRanges(); i++) {
+        WatchedByteRange byteRange = GetWatchedByteRange(i);
+        uint8_t *bytes = gbWram + (byteRange.bank * 0x1000) + byteRange.byteOffset;
+        UpdateByteRange(i, byteRange, bytes);
+    }
+}
+
 void gbEmulate(int ticksToStop)
 {
     gbRegister tempRegister;
@@ -4635,6 +4661,9 @@ void gbEmulate(int ticksToStop)
     gbUpdateJoypads(true);
 
     while (1) {
+        // External control
+        handle_external_watched_wram();
+
         uint16_t oldPCW = PC.W;
 
         if (IFF & 0x80) {

@@ -990,6 +990,13 @@ set(
 )
 
 set(
+    SRC_EXTERNAL
+    src/external/control.cc
+    src/external/control.pb.cc
+    src/external/control.grpc.pb.cc
+)
+
+set(
     HDR_GB
     src/gb/gb.h
     src/gb/gbCheats.h
@@ -1159,6 +1166,7 @@ if(NOT TRANSLATIONS_ONLY)
         ${SRC_GBA}
         ${HDR_GBA}
         ${SRC_GB}
+        ${SRC_EXTERNAL}
         ${HDR_GB}
         ${SRC_APU}
         ${HDR_APU}
