@@ -89,6 +89,12 @@ FetchContent_Declare(
 set(FETCHCONTENT_QUIET OFF)
 FetchContent_MakeAvailable(gRPC)
 
+# Include dirs for gRPC and dependencies
+include_directories(
+    "${grpc_SOURCE_DIR}/${gRPC_INSTALL_INCLUDEDIR}"
+    ${absl_SOURCE_DIR}
+)
+
 if(NOT CMAKE_PREFIX_PATH AND (NOT ("$ENV{CMAKE_PREFIX_PATH}" STREQUAL "")))
     set(CMAKE_PREFIX_PATH "$ENV{CMAKE_PREFIX_PATH}")
 endif()
@@ -438,6 +444,9 @@ set(
     ${SFML_LIBRARIES}
     ${OPENGL_LIBRARIES}
     ${ZLIB_LIBRARY}
+    grpc++
+    grpc
+    protobuf
 )
 
 if(ENABLE_FFMPEG)
@@ -1206,7 +1215,6 @@ if((NOT TRANSLATIONS_ONLY) AND ENABLE_SDL)
 
     target_link_libraries(
         vbam
-        grpc++
         ${VBAMCORE_LIBS}
         ${WIN32_LIBRARIES}
         ${LIRC_CLIENT_LIBRARY}
