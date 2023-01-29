@@ -68,12 +68,15 @@ std::map<BankAndByteOffset, std::vector<uint8_t>> latestBytesForOffset;
 // Functions
 
 void _StartListeningOnThread(std::unique_ptr<ControlService::Stub> service) {
+    printf("Thread will start listening for WRAM updates...\n");
     ClientContext context;
     context.AddMetadata("authorization", "Bearer " + apiToken);
     auto reader = service->ListenWatchWRAM(&context, Empty());
+    printf("Connection state: %d\n", channel->GetState(true));
 
     WatchedWRAM msg;
     while (reader->Read(&msg)) {
+        printf("Did receive watched WRAM message");
         std::lock_guard<std::mutex> lock(bytesMutex);
         std::vector<WatchedWRAMRange> watchedRanges;
         for (auto range : msg.ranges()) {
@@ -104,8 +107,11 @@ void OpenEmulatorConfigNearRomPath(const char *romPath) {
 
 /// Open a connection to the gRPC server and listen for updates to WRAM
 void StartListeningForWRAMUpdates() {
+    printf("Will start listening for WRAM updates\n");
     auto _channel = grpc::CreateChannel(GRPC_SERVER, grpc::InsecureChannelCredentials());
     channel.swap(_channel);
+    auto state = channel->GetState(true);
+    printf("Connection state: %d\n", state);
 
     auto service = ControlService::NewStub(channel);
     std::thread listenerThread(_StartListeningOnThread, std::move(service));
@@ -114,6 +120,7 @@ void StartListeningForWRAMUpdates() {
 
 /// Close any open gRPC connections
 void StopListeningForWRAMUpdates() {
+    printf("Will stop listening for WRAM updates\n");
     // Replace the channel with a null one
     std::shared_ptr<Channel> nullChannel;
     channel = std::move(nullChannel);
@@ -145,6 +152,7 @@ void _SendByteRangeOnThread(std::unique_ptr<ControlService::Stub> service, WRAMB
 }
 
 void UpdateByteRange(size_t index, WatchedByteRange byteRange, uint8_t *bytes) {
+    printf("Will attempt to send watched byte range...");
     std::lock_guard<std::mutex> lock(bytesMutex);
 
     std::vector<uint8_t> bytesToSend(bytes, bytes + byteRange.byteLength);
