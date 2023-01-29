@@ -8,13 +8,16 @@
 #include "control.h"
 #include "control.pb.h"
 #include "control.grpc.pb.h"
+#include "root_certs.h"
 
 using std::string;
 using grpc::Channel;
 using grpc::ClientContext;
 using google::protobuf::Empty;
 
-const string GRPC_SERVER = "localhost:8081";
+// const string GRPC_SERVER = "localhost:8081";
+const string GRPC_SERVER = "pokemon-party-server.fly.dev:8081";
+
 #if defined(WIN32) || defined(_WIN32) || defined(__WIN32) && !defined(__CYGWIN__)
 static const std::string slash="\\";
 #else
@@ -108,7 +111,10 @@ void OpenEmulatorConfigNearRomPath(const char *romPath) {
 /// Open a connection to the gRPC server and listen for updates to WRAM
 void StartListeningForWRAMUpdates() {
     printf("Will start listening for WRAM updates\n");
-    auto _channel = grpc::CreateChannel(GRPC_SERVER, grpc::InsecureChannelCredentials());
+    // auto _channel = grpc::CreateChannel(GRPC_SERVER, grpc::InsecureChannelCredentials());
+    auto options = grpc::SslCredentialsOptions{ root_certs, "", "" };
+    auto _channel = grpc::CreateChannel(GRPC_SERVER, grpc::SslCredentials(options));
+
     channel.swap(_channel);
     auto state = channel->GetState(true);
     printf("Connection state: %d\n", state);
