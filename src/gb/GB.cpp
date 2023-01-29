@@ -4636,7 +4636,10 @@ void handle_external_watched_wram() {
 
     for (size_t i = 0; i < CountOfWatchedRanges(); i++) {
         WatchedByteRange byteRange = GetWatchedByteRange(i);
-        uint8_t *bytes = gbWram + (byteRange.bank * 0x1000) + byteRange.byteOffset;
+        uint8_t *base = byteRange.bank == 0 ? gbMemoryMap[0x0c] : gbWram;
+        int adjustedOffset = byteRange.byteOffset - 0xc000; // update address to zero-based
+        int bankMultiplier = byteRange.bank > 0 ? byteRange.bank - 1 : 0;
+        uint8_t *bytes = base + (bankMultiplier * 0x1000) + adjustedOffset;
         UpdateByteRange(i, byteRange, bytes);
     }
 }

@@ -76,10 +76,10 @@ void _StartListeningOnThread(std::unique_ptr<ControlService::Stub> service) {
 
     WatchedWRAM msg;
     while (reader->Read(&msg)) {
-        printf("Did receive watched WRAM message");
         std::lock_guard<std::mutex> lock(bytesMutex);
         std::vector<WatchedWRAMRange> watchedRanges;
         for (auto range : msg.ranges()) {
+            printf("Did receive watched WRAM bank: %d, offset: %d, length: %d\n", range.bank(), range.byte_offset(), range.byte_length());
             watchedRanges.push_back(range);
         }
         currentWatchedRanges = watchedRanges;
@@ -146,13 +146,11 @@ void _SendByteRangeOnThread(std::unique_ptr<ControlService::Stub> service, WRAMB
     ClientContext context;
     context.AddMetadata("authorization", "Bearer " + apiToken);
     auto status = service->WatchedWRAMDidChange(&context, byteRange, nullptr);
-    if (status.ok() == false) {
-        printf("Invalid status from sending watched WRAM\n");
-    }
+    printf("Did send byte range\n");
 }
 
 void UpdateByteRange(size_t index, WatchedByteRange byteRange, uint8_t *bytes) {
-    printf("Will attempt to send watched byte range...");
+    printf("Will attempt to send watched byte range...\n");
     std::lock_guard<std::mutex> lock(bytesMutex);
 
     std::vector<uint8_t> bytesToSend(bytes, bytes + byteRange.byteLength);
@@ -168,6 +166,7 @@ void UpdateByteRange(size_t index, WatchedByteRange byteRange, uint8_t *bytes) {
         }
     }
     
+    printf("Bytes are different. Attempting send...\n");
     WRAMByteRange _byteRange;
     _byteRange.set_bank(byteRange.bank);
     _byteRange.set_byte_offset(byteRange.byteOffset);
