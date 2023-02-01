@@ -24,19 +24,6 @@ static const std::string slash="\\";
 static const std::string slash="/";
 #endif
 
-struct BankAndByteOffset {
-    uint32_t bank;
-    uint32_t byteOffset;
-
-    bool operator < (const BankAndByteOffset &other) const {
-        if (bank != other.bank) {
-            return bank < other.bank;
-        } else {
-            return byteOffset < other.byteOffset;
-        }
-    }
-};
-
 // Inline helpers
 
 // trim from start (in place)
@@ -66,7 +53,6 @@ std::string apiToken;
 
 std::mutex bytesMutex;
 std::vector<WatchedWRAMRange> currentWatchedRanges;
-std::map<BankAndByteOffset, std::vector<uint8_t>> latestBytesForOffset;
 
 // Functions
 
@@ -158,21 +144,7 @@ void _SendByteRangeOnThread(std::unique_ptr<ControlService::Stub> service, WRAMB
 void UpdateByteRange(size_t index, WatchedByteRange byteRange, uint8_t *bytes) {
     printf("Will attempt to send watched byte range...\n");
     std::lock_guard<std::mutex> lock(bytesMutex);
-
-    std::vector<uint8_t> bytesToSend(bytes, bytes + byteRange.byteLength);
-    BankAndByteOffset offset;
-    offset.bank = byteRange.bank;
-    offset.byteOffset = byteRange.byteOffset;
-
-    if (latestBytesForOffset.count(offset) > 0) {
-        auto latestBytes = latestBytesForOffset.at(offset);
-        if (bytesToSend == latestBytes) {
-            // We have already sent these same bytes. Return early
-            return;
-        }
-    }
     
-    printf("Bytes are different. Attempting send...\n");
     WRAMByteRange _byteRange;
     _byteRange.set_bank(byteRange.bank);
     _byteRange.set_byte_offset(byteRange.byteOffset);
@@ -181,5 +153,4 @@ void UpdateByteRange(size_t index, WatchedByteRange byteRange, uint8_t *bytes) {
     auto service = ControlService::NewStub(channel);
     std::thread _senderThread(_SendByteRangeOnThread, std::move(service), _byteRange);
     _senderThread.detach();
-    latestBytesForOffset[offset] = bytesToSend;
 }
