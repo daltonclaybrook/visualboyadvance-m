@@ -104,7 +104,7 @@ void OpenEmulatorConfigNearRomPath(const char *romPath) {
 
     std::string tokenString((std::istreambuf_iterator<char>(tokenStream)), (std::istreambuf_iterator<char>()));
     trim(tokenString);
-    printf("Token string: %s\n", tokenString.c_str());
+    printf("Did open config with token: %s\n", tokenString.c_str());
     apiToken = std::move(tokenString);
 }
 

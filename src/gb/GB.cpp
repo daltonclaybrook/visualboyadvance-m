@@ -4195,8 +4195,11 @@ bool gbLoadRom(const char* szFile)
         return false;
 
     // External control
+    printf("Trying to open emulator config...\n");
     OpenEmulatorConfigNearRomPath(szFile);
+    printf("Trying to listen for WRAM updates...\n");
     StartListeningForWRAMUpdates();
+    printf("Did return from listening for WRAM updates.\n");
 
     return gbUpdateSizes();
 }
